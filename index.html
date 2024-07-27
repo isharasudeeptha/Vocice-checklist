@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Command Checklist</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        textarea { width: 100%; height: 200px; margin-top: 20px; padding: 10px; font-size: 16px; }
+        button { margin: 5px; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Voice Command Checklist</h1>
+    <button onclick="startListening()">Start Voice Command</button>
+    <button onclick="stopListening()">Stop Voice Command</button>
+    <button onclick="clearText()">Clear</button>
+    <div id="commands"></div>
+    <textarea id="textbox" placeholder="Your text will appear here..."></textarea>
+
+    <script>
+        let recognition;
+        let recognizing = false;
+        let final_transcript = '';
+
+        function startListening() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Your browser does not support speech recognition. Please use a different browser.');
+                return;
+            }
+
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function() {
+                recognizing = true;
+                document.getElementById('commands').textContent = 'Listening...';
+            };
+
+            recognition.onresult = function(event) {
+                let interim_transcript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        final_transcript += event.results[i][0].transcript + '\n';
+                    } else {
+                        interim_transcript += event.results[i][0].transcript;
+                    }
+                }
+
+                document.getElementById('textbox').value = final_transcript + interim_transcript;
+            };
+
+            recognition.onspeechend = function() {
+                stopListening();
+            };
+
+            recognition.onerror = function(event) {
+                document.getElementById('commands').textContent = 'Error: ' + event.error;
+            };
+
+            recognition.start();
+        }
+
+        function stopListening() {
+            if (recognizing) {
+                recognition.stop();
+                recognizing = false;
+                document.getElementById('commands').textContent = 'Voice command stopped.';
+            }
+        }
+
+        function clearText() {
+            final_transcript = '';
+            document.getElementById('textbox').value = '';
+            document.getElementById('commands').textContent = '';
+        }
+    </script>
+</body>
+</html>
